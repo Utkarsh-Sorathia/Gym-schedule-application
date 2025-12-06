@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+}
+
+:root {
+  /* Light Mode - Zinc/Indigo Palette */
+  --background: #ffffff;
+  --foreground: #09090b;
+
+  --primary: #4f46e5;
+  /* Indigo 600 */
+  --primary-foreground: #ffffff;
+
+  --secondary: #f4f4f5;
+  /* Zinc 100 */
+  --secondary-foreground: #18181b;
+
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #4f46e5;
+
+  --card: #ffffff;
+  --card-foreground: #09090b;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Mode - Zinc/Indigo Palette */
+    --background: #09090b;
+    /* Zinc 950 */
+    --foreground: #fafafa;
+    /* Zinc 50 */
+
+    --primary: #6366f1;
+    /* Indigo 500 */
+    --primary-foreground: #ffffff;
+
+    --secondary: #27272a;
+    /* Zinc 800 */
+    --secondary-foreground: #fafafa;
+
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+
+    --accent: #27272a;
+    --accent-foreground: #fafafa;
+
+    --destructive: #7f1d1d;
+    --destructive-foreground: #fef2f2;
+
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #6366f1;
+
+    --card: #09090b;
+    --card-foreground: #fafafa;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Utilities for Premium Feel */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass {
+    background: rgba(9, 9, 11, 0.7);
+  }
+}
+
+.input-premium {
+  @apply block w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2;
+}
+
+.card {
+  @apply rounded-xl border border-border bg-card text-card-foreground shadow-sm;
+}
