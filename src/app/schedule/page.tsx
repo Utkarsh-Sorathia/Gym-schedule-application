@@ -5,6 +5,26 @@ import { ISchedule, IExercise, ISet } from '@/models/Schedule';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+const MUSCLE_GROUPS: { [key: string]: string } = {
+    'Monday': 'Chest & Triceps',
+    'Tuesday': 'Back & Biceps',
+    'Wednesday': 'Shoulders',
+    'Thursday': 'Legs & Abs',
+    'Friday': 'Biceps, Triceps & Forearms',
+    'Saturday': 'Chest & Shoulders',
+    'Sunday': 'Rest',
+};
+
+const WORKOUT_IMAGES: { [key: string]: string } = {
+    'Monday': '/images/workouts/monday.avif',
+    'Tuesday': '/images/workouts/tuesday.avif',
+    'Wednesday': '/images/workouts/wednesday.avif',
+    'Thursday': '/images/workouts/thursday.avif',
+    'Friday': '/images/workouts/friday.avif',
+    'Saturday': '/images/workouts/saturday.avif',
+    'Sunday': '/images/workouts/monday.avif', // Fallback to Monday image for Sunday
+};
+
 export default function SchedulePage() {
     const [schedules, setSchedules] = useState<ISchedule[]>([]);
     const [loading, setLoading] = useState(true);
@@ -249,13 +269,21 @@ export default function SchedulePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Exercise List */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="card p-6 bg-card/50 backdrop-blur-sm min-h-[400px]">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-foreground">{selectedDay}&apos;s Workout</h2>
-                            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary">
-                                {exercises.length} Exercises
-                            </span>
+                    {/* Hero Banner */}
+                    <div className="relative h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden">
+                        <div
+                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                            style={{ backgroundImage: `url(${WORKOUT_IMAGES[selectedDay]})` }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                        <div className="absolute bottom-6 left-6 text-white">
+                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2">{selectedDay} ({MUSCLE_GROUPS[selectedDay]})&apos;s Workout</h1>
+                            <p className="text-lg md:text-xl opacity-90">{exercises.length} Exercises</p>
                         </div>
+                    </div>
+
+                    <div className="card p-6 bg-card/50 backdrop-blur-sm min-h-[400px]">
 
                         {loading ? (
                             <div className="space-y-4">
