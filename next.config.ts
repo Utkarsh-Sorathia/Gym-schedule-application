@@ -9,6 +9,19 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
+    runtimeCaching: [
+      {
+        urlPattern: /\/api\/(schedule|notes)/,
+        handler: "StaleWhileRevalidate",
+        options: {
+          cacheName: "api-cache",
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 60 * 60 * 24, // 1 day
+          },
+        },
+      },
+    ],
   },
 });
 

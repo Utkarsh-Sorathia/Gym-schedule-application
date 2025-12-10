@@ -6,13 +6,13 @@ import Navbar from "@/components/Navbar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Notes & Tasks Manager",
+  title: "gym-schedule-application",
   description: "A simple app to manage your notes and tasks",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Notes & Tasks Manager",
+    title: "gym-schedule-application",
   },
   formatDetection: {
     telephone: false,

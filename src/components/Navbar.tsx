@@ -32,15 +32,6 @@ export default function Navbar() {
                         </div>
                         <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
                             <Link
-                                href="/notes"
-                                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${isActive('/notes')
-                                    ? 'border-primary text-foreground'
-                                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-                                    }`}
-                            >
-                                Notes
-                            </Link>
-                            <Link
                                 href="/schedule"
                                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${isActive('/schedule')
                                     ? 'border-primary text-foreground'
@@ -48,6 +39,15 @@ export default function Navbar() {
                                     }`}
                             >
                                 Gym Schedule
+                            </Link>
+                            <Link
+                                href="/notes"
+                                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${isActive('/notes')
+                                    ? 'border-primary text-foreground'
+                                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                                    }`}
+                            >
+                                Notes
                             </Link>
                         </div>
                         {/* Mobile menu button */}
@@ -79,16 +79,6 @@ export default function Navbar() {
             <div className={`${isOpen ? 'block' : 'hidden'} sm:hidden border-t border-border/40`}>
                 <div className="pt-2 pb-4 space-y-1 px-4">
                     <Link
-                        href="/notes"
-                        onClick={closeMenu}
-                        className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${isActive('/notes')
-                            ? 'bg-primary/10 border-primary text-primary'
-                            : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'
-                            }`}
-                    >
-                        Notes
-                    </Link>
-                    <Link
                         href="/schedule"
                         onClick={closeMenu}
                         className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${isActive('/schedule')
@@ -97,6 +87,16 @@ export default function Navbar() {
                             }`}
                     >
                         Gym Schedule
+                    </Link>
+                    <Link
+                        href="/notes"
+                        onClick={closeMenu}
+                        className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${isActive('/notes')
+                            ? 'bg-primary/10 border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'
+                            }`}
+                    >
+                        Notes
                     </Link>
                 </div>
             </div>

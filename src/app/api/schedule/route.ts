@@ -2,10 +2,18 @@ import dbConnect from '@/lib/db';
 import Schedule from '@/models/Schedule';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: Request) {
     await dbConnect();
     try {
-        const schedules = await Schedule.find({});
+        const { searchParams } = new URL(request.url);
+        const day = searchParams.get('day');
+
+        let query = {};
+        if (day) {
+            query = { day: { $regex: new RegExp(`^${day}$`, 'i') } };
+        }
+
+        const schedules = await Schedule.find(query);
         return NextResponse.json({ success: true, data: schedules });
     } catch (error) {
         console.error('Error fetching schedules:', error);

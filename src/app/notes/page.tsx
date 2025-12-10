@@ -8,6 +8,7 @@ export default function NotesPage() {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(true);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchNotes();
@@ -33,8 +34,11 @@ export default function NotesPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('/api/notes', {
-                method: 'POST',
+            const url = editingId ? `/api/notes/${editingId}` : '/api/notes';
+            const method = editingId ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title, content }),
             });
@@ -45,11 +49,26 @@ export default function NotesPage() {
             if (data.success) {
                 setTitle('');
                 setContent('');
+                setEditingId(null);
                 fetchNotes();
             }
         } catch (error) {
-            console.error('Failed to create note', error);
+            console.error('Failed to save note', error);
         }
+    };
+
+    const handleEdit = (note: INote) => {
+        setTitle(note.title);
+        setContent(note.content);
+        setEditingId(note._id as unknown as string);
+        // Scroll to top to see the form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleCancelEdit = () => {
+        setTitle('');
+        setContent('');
+        setEditingId(null);
     };
 
     const handleDelete = async (id: string) => {
@@ -72,7 +91,9 @@ export default function NotesPage() {
     return (
         <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="card p-6 bg-card/50 backdrop-blur-sm">
-                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">Create New Note</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">
+                    {editingId ? 'Edit Note' : 'Create New Note'}
+                </h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                         <label htmlFor="title" className="block text-sm font-medium text-muted-foreground mb-1.5">
@@ -104,12 +125,21 @@ export default function NotesPage() {
                             className="input-premium resize-none"
                         />
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end space-x-3">
+                        {editingId && (
+                            <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="btn-secondary"
+                            >
+                                Cancel
+                            </button>
+                        )}
                         <button
                             type="submit"
                             className="btn-primary"
                         >
-                            Add Note
+                            {editingId ? 'Update Note' : 'Add Note'}
                         </button>
                     </div>
                 </form>
@@ -129,15 +159,26 @@ export default function NotesPage() {
                                 <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground/70">
                                     <span>{new Date(note.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
                                 </div>
-                                <button
-                                    onClick={() => handleDelete(note._id as unknown as string)}
-                                    className="absolute top-4 right-4 p-1.5 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all"
-                                    title="Delete note"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                    </svg>
-                                </button>
+                                <div className="absolute top-4 right-4 flex space-x-1 opacity-0 group-hover:opacity-100 transition-all">
+                                    <button
+                                        onClick={() => handleEdit(note)}
+                                        className="p-1.5 rounded-md text-muted-foreground/50 hover:text-primary hover:bg-primary/10"
+                                        title="Edit note"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(note._id as unknown as string)}
+                                        className="p-1.5 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
+                                        title="Delete note"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))
