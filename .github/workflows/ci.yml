@@ -29,9 +29,19 @@ jobs:
       run: npm run build
       env:
         MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        NODE_ENV: production
+        NEXT_TELEMETRY_DISABLED: 1
+        TURBOPACK: false
+
+    - name: Debug Build Output
+      run: |
+        echo "Root directory:"
+        ls -a
+        echo "Next.js build directory:"
+        ls -a .next || echo ".next does NOT exist"
 
     - name: Upload Next.js Build Artifact
       uses: actions/upload-artifact@v4
       with:
         name: nextjs-build
-        path: .next/**
+        path: .next
