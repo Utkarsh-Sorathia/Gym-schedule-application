@@ -2,16 +2,35 @@ name: CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-  deploy:
+  docker-build:
     runs-on: ubuntu-latest
-    # needs: [build-and-lint] # Removed because 'needs' only works for jobs in the same file.
-    # To strictly run after CI, we would use 'workflow_run' trigger or put both in one file.
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Deploy
-      run: echo "Deploying application... (Placeholder)"
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifact from CI
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+          path: .next   # Extract build output into .next directory
+
+      - name: Show downloaded build
+        run: ls -R .next
+
+      - name: Build Docker Image
+        run: |
+          docker build -t gym-schedule-app:latest .
+
+      - name: Save Docker Image as TAR
+        run: |
+          docker save gym-schedule-app:latest -o gym-schedule-app.tar
+
+      - name: Upload Docker Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: gym-schedule-app.tar
