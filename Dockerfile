@@ -10,6 +10,10 @@ RUN npm ci
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Accept build argument for MongoDB URI
+ARG MONGODB_URI
+ENV MONGODB_URI=$MONGODB_URI
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 

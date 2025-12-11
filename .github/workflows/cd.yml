@@ -33,7 +33,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t gym-schedule-app:latest .
+          docker build --build-arg MONGODB_URI="${{ secrets.MONGODB_URI }}" -t gym-schedule-app:latest .
 
       - name: Save Docker Image as TAR
         run: |
