@@ -1,11 +1,14 @@
 name: CD
 
 on:
-  push:
-    branches: ["main"]
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
 
 jobs:
   docker-build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -16,18 +19,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nextjs-build
-          path: .next   # Extract build output into .next directory
+          path: .next
 
       - name: Show downloaded build
         run: ls -R .next
 
       - name: Build Docker Image
-        run: |
-          docker build -t gym-schedule-app:latest .
+        run: docker build -t gym-schedule-app .
 
       - name: Save Docker Image as TAR
-        run: |
-          docker save gym-schedule-app:latest -o gym-schedule-app.tar
+        run: docker save gym-schedule-app -o gym-schedule-app.tar
 
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v4
