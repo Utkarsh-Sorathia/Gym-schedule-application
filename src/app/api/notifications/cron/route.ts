@@ -7,6 +7,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@gymschedule.com';
+const CRON_SECRET = process.env.CRON_SECRET;
 
 if (!MONGODB_URI || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     console.error('Missing environment variables for notifications');
@@ -25,10 +26,17 @@ async function connectDB() {
     await mongoose.connect(MONGODB_URI as string);
 }
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
     try {
+        // Verify the request is authorized
+        const authHeader = request.headers.get('authorization');
+
+        // Check for Vercel Cron secret or custom authorization
+        if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         await connectDB();
-        const body = await request.json();
 
         // Import quote and day utilities
         const { getRandomQuote, getDayName } = await import('@/lib/quotes');
@@ -64,20 +72,25 @@ export async function POST(request: Request) {
         }
 
         const quote = getRandomQuote();
-        const title = body.title || `🏋️ Time for Gym - ${day}'s Workout!`;
-        const notificationBody = body.body || `${workoutFocus}\n\n${quote}`;
+        const title = `🏋️ Time for Gym - ${day}'s Workout!`;
+        const notificationBody = `${workoutFocus}\n\n${quote}`;
 
         const payload = JSON.stringify({
             title,
             body: notificationBody,
-            icon: body.icon || '/icon.svg',
-            url: body.url || '/schedule',
+            icon: '/icon.svg',
+            url: '/schedule',
         });
 
         const subscriptions = await Subscription.find({});
 
         if (subscriptions.length === 0) {
-            return NextResponse.json({ message: 'No subscriptions found', success: true });
+            return NextResponse.json({
+                message: 'No subscriptions found',
+                success: true,
+                day,
+                time: new Date().toISOString()
+            });
         }
 
         const results = await Promise.allSettled(
@@ -96,10 +109,12 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            message: `Sent to ${successCount} of ${subscriptions.length} subscriptions`
+            message: `Sent to ${successCount} of ${subscriptions.length} subscriptions`,
+            day,
+            time: new Date().toISOString()
         });
     } catch (error) {
-        console.error('Error sending notifications:', error);
+        console.error('Error sending scheduled notifications:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
