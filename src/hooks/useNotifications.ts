@@ -11,22 +11,20 @@ import {
 } from '@/lib/notifications';
 
 export function useNotifications() {
-    const [settings, setSettings] = useState<NotificationSettings>({
-        enabled: false,
-        time: '18:30',
-        lastNotified: null,
-    });
-    const [permission, setPermission] = useState<NotificationPermission>('default');
-    const [isSupported, setIsSupported] = useState(true);
-
-    // Load settings on mount
-    useEffect(() => {
-        setIsSupported('Notification' in window);
-        if ('Notification' in window) {
-            setPermission(Notification.permission);
-            setSettings(getNotificationSettings());
+    const [settings, setSettings] = useState<NotificationSettings>(() => {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            return getNotificationSettings();
         }
-    }, []);
+        return {
+            enabled: false,
+            time: '18:30',
+            lastNotified: null,
+        };
+    });
+    const [isSupported] = useState(() => typeof window !== 'undefined' && 'Notification' in window);
+    const [permission, setPermission] = useState<NotificationPermission>(() =>
+        typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
+    );
 
     // Check for notification time every minute
     useEffect(() => {

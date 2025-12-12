@@ -137,7 +137,7 @@ export function NotificationMenu() {
                             </div>
 
                             <p className="text-[10px] text-muted-foreground text-center">
-                                You'll receive a quote & workout preview at {settings.time}
+                                You&apos;ll receive a quote &amp; workout preview at {settings.time}
                             </p>
 
                             {isSubscribed && (

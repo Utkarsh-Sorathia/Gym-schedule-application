@@ -77,7 +77,7 @@ async function getTodaysWorkout(): Promise<string> {
         if (data.success && data.data && data.data.length > 0) {
             const exercises = data.data[0].exercises;
             if (exercises && exercises.length > 0) {
-                const exerciseList = exercises.slice(0, 3).map((ex: any) => ex.name).join(', ');
+                const exerciseList = exercises.slice(0, 3).map((ex: { name: string }) => ex.name).join(', ');
                 return `Today's workout: ${exerciseList}${exercises.length > 3 ? '...' : ''}`;
             }
         }

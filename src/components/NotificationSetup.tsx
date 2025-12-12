@@ -17,7 +17,7 @@ export default function NotificationSetup() {
         return (
             <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
                 <p className="text-yellow-600 dark:text-yellow-400">
-                    ⚠️ Your browser doesn't support notifications
+                    ⚠️ Your browser doesn&apos;t support notifications
                 </p>
             </div>
         );
@@ -52,8 +52,8 @@ export default function NotificationSetup() {
                         <button
                             onClick={settings.enabled ? disableNotifications : handleEnable}
                             className={`px-4 py-2 rounded-lg font-medium transition-colors ${settings.enabled
-                                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                                    : 'bg-primary hover:bg-primary/90 text-white'
+                                ? 'bg-red-500 hover:bg-red-600 text-white'
+                                : 'bg-primary hover:bg-primary/90 text-white'
                                 }`}
                         >
                             {settings.enabled ? 'Disable' : 'Enable'}
@@ -97,7 +97,7 @@ export default function NotificationSetup() {
                             className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                            You'll receive a reminder at this time every day
+                            You&apos;ll receive a reminder at this time every day
                         </p>
                     </div>
 
@@ -117,7 +117,7 @@ export default function NotificationSetup() {
 
                     <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
                         <p className="text-sm text-green-600 dark:text-green-400">
-                            ✓ You'll receive a notification at {settings.time} with a motivational quote and today's workout!
+                            ✓ You&apos;ll receive a notification at {settings.time} with a motivational quote and today&apos;s workout!
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
                             💡 Tip: Keep this tab open or pinned for notifications to work

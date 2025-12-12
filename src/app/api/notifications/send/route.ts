@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
         // Fetch today's workout
         const day = getDayName();
-        let workoutFocus = `It's ${MUSCLE_GROUPS[day]} Day` || "Your scheduled workout";
+        const workoutFocus = `It's ${MUSCLE_GROUPS[day]} Day` || "Your scheduled workout";
 
         try {
             const scheduleResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/schedule?day=${day}`);
