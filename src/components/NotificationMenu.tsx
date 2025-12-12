@@ -4,6 +4,8 @@ import * as React from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { showTestNotification } from "@/lib/notifications";
 
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+
 export function NotificationMenu() {
     const [isOpen, setIsOpen] = React.useState(false);
     const menuRef = React.useRef<HTMLDivElement>(null);
@@ -15,6 +17,8 @@ export function NotificationMenu() {
         disableNotifications,
         updateNotificationTime,
     } = useNotifications();
+
+    const { subscribeToPush, sendTestNotification, isSubscribed } = usePushNotifications();
 
     // Close menu when clicking outside
     React.useEffect(() => {
@@ -29,7 +33,9 @@ export function NotificationMenu() {
 
     const handleEnable = async () => {
         const success = await enableNotifications();
-        if (!success) {
+        if (success) {
+            await subscribeToPush();
+        } else {
             alert("Please allow notifications in your browser settings");
         }
     };
@@ -70,8 +76,8 @@ export function NotificationMenu() {
                             <button
                                 onClick={settings.enabled ? disableNotifications : handleEnable}
                                 className={`text-xs px-2 py-1 rounded-md font-medium transition-colors ${settings.enabled
-                                        ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
-                                        : "bg-primary/10 text-primary hover:bg-primary/20"
+                                    ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                                    : "bg-primary/10 text-primary hover:bg-primary/20"
                                     }`}
                             >
                                 {settings.enabled ? "Disable" : "Enable"}
@@ -115,29 +121,31 @@ export function NotificationMenu() {
                                 />
                             </div>
 
-                            <button
-                                onClick={() => showTestNotification()}
-                                className="w-full flex items-center justify-center gap-2 bg-secondary text-secondary-foreground text-sm py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="w-3 h-3"
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={() => showTestNotification()}
+                                    className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground text-xs py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
                                 >
-                                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                                </svg>
-                                Test Notification
-                            </button>
+                                    Test Local
+                                </button>
+                                <button
+                                    onClick={() => sendTestNotification()}
+                                    className="flex items-center justify-center gap-2 bg-primary/10 text-primary text-xs py-1.5 rounded-md hover:bg-primary/20 transition-colors"
+                                >
+                                    Test Server
+                                </button>
+                            </div>
 
                             <p className="text-[10px] text-muted-foreground text-center">
                                 You'll receive a quote & workout preview at {settings.time}
                             </p>
+
+                            {isSubscribed && (
+                                <p className="text-[10px] text-green-600 dark:text-green-400 text-center flex items-center justify-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Connected to Push Server
+                                </p>
+                            )}
                         </div>
                     )}
 

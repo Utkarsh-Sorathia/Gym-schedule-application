@@ -102,8 +102,8 @@ export async function showGymNotification(): Promise<void> {
 
     const notification = new Notification(`🏋️ Time for Gym - ${day}'s Workout!`, {
         body: `${quote}\n\n${workout}`,
-        icon: '/icons/icon-192x192.png', // You can add a gym icon here
-        badge: '/icons/icon-192x192.png',
+        icon: '/icon.svg', // You can add a gym icon here
+        badge: '/icon.svg',
         tag: 'gym-reminder',
         requireInteraction: true,
     });
@@ -132,7 +132,7 @@ export async function showTestNotification(): Promise<void> {
 
     const notification = new Notification(`🏋️ Test - ${day}'s Workout Reminder!`, {
         body: `${quote}\n\nThis is a test notification. Your daily reminder will appear at your scheduled time.`,
-        icon: '/icons/icon-192x192.png',
+        icon: '/icon.svg',
         tag: 'gym-test',
         requireInteraction: false,
     });
