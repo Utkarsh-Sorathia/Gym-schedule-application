@@ -38,6 +38,44 @@ export async function GET(request: Request) {
 
         await connectDB();
 
+        // Get current time in IST (Asia/Kolkata timezone)
+        const now = new Date();
+        const istTime = new Intl.DateTimeFormat('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).format(now);
+
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+            .toISOString()
+            .split('T')[0];
+
+        console.log(`[Cron] Running at IST time: ${istTime}, Date: ${today}`);
+
+        // Find subscriptions that:
+        // 1. Match current time (within the same hour:minute)
+        // 2. Haven't been notified today (lastNotified is not today)
+        const subscriptions = await Subscription.find({
+            notificationTime: istTime,
+            $or: [
+                { lastNotified: { $ne: today } },
+                { lastNotified: null }
+            ]
+        });
+
+        console.log(`[Cron] Found ${subscriptions.length} subscriptions for time ${istTime}`);
+
+        if (subscriptions.length === 0) {
+            return NextResponse.json({
+                message: `No subscriptions found for time ${istTime}`,
+                success: true,
+                time: istTime,
+                date: today
+            });
+        }
+
         // Import quote and day utilities
         const { getRandomQuote, getDayName } = await import('@/lib/quotes');
 
@@ -82,17 +120,6 @@ export async function GET(request: Request) {
             url: '/schedule',
         });
 
-        const subscriptions = await Subscription.find({});
-
-        if (subscriptions.length === 0) {
-            return NextResponse.json({
-                message: 'No subscriptions found',
-                success: true,
-                day,
-                time: new Date().toISOString()
-            });
-        }
-
         const results = await Promise.allSettled(
             subscriptions.map((sub) =>
                 webpush.sendNotification(sub, payload).catch((err) => {
@@ -107,11 +134,19 @@ export async function GET(request: Request) {
 
         const successCount = results.filter(r => r.status === 'fulfilled').length;
 
+        // Update lastNotified for all subscriptions that were processed
+        await Subscription.updateMany(
+            { _id: { $in: subscriptions.map(s => s._id) } },
+            { lastNotified: today }
+        );
+
+        console.log(`[Cron] Sent to ${successCount} of ${subscriptions.length} subscriptions`);
+
         return NextResponse.json({
             success: true,
             message: `Sent to ${successCount} of ${subscriptions.length} subscriptions`,
-            day,
-            time: new Date().toISOString()
+            time: istTime,
+            date: today
         });
     } catch (error) {
         console.error('Error sending scheduled notifications:', error);

@@ -21,13 +21,13 @@ export function usePushNotifications() {
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [subscription, setSubscription] = useState<PushSubscription | null>(null);
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+    const [notificationTime, setNotificationTime] = useState('18:30'); // Default time
 
     useEffect(() => {
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
             // Register Service Worker
             navigator.serviceWorker.register('/sw.js')
                 .then(reg => {
-                    console.log('Service Worker registered', reg);
                     setRegistration(reg);
                     reg.pushManager.getSubscription().then(sub => {
                         if (sub) {
@@ -40,10 +40,7 @@ export function usePushNotifications() {
         }
     }, []);
 
-    const subscribeToPush = async () => {
-        console.log('VAPID_PUBLIC_KEY:', VAPID_PUBLIC_KEY);
-        console.log('Registration:', registration);
-
+    const subscribeToPush = async (time: string = '18:30') => {
         if (!registration) {
             console.error('No Service Worker registration found');
             return false;
@@ -63,17 +60,20 @@ export function usePushNotifications() {
 
             setSubscription(sub);
             setIsSubscribed(true);
+            setNotificationTime(time);
 
-            // Send subscription to backend
+            // Send subscription to backend with notification time
             await fetch('/api/notifications/subscribe', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(sub),
+                body: JSON.stringify({
+                    ...sub.toJSON(),
+                    notificationTime: time
+                }),
             });
 
-            console.log('Subscribed to push notifications');
             return true;
         } catch (error) {
             console.error('Failed to subscribe to push notifications', error);
@@ -87,7 +87,38 @@ export function usePushNotifications() {
         await subscription.unsubscribe();
         setSubscription(null);
         setIsSubscribed(false);
-        console.log('Unsubscribed from push notifications');
+        setNotificationTime('18:30'); // Reset to default
+    };
+
+    const updateNotificationTime = async (time: string) => {
+        if (!subscription) {
+            console.error('No active subscription to update');
+            return false;
+        }
+
+        try {
+            const response = await fetch('/api/notifications/update-time', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    endpoint: subscription.endpoint,
+                    notificationTime: time
+                }),
+            });
+
+            if (response.ok) {
+                setNotificationTime(time);
+                return true;
+            } else {
+                console.error('Failed to update notification time');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error updating notification time:', error);
+            return false;
+        }
     };
 
     const sendTestNotification = async () => {
@@ -102,6 +133,8 @@ export function usePushNotifications() {
         isSubscribed,
         subscribeToPush,
         unsubscribeFromPush,
-        sendTestNotification
+        sendTestNotification,
+        notificationTime,
+        updateNotificationTime
     };
 }

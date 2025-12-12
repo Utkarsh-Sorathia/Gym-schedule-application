@@ -1,6 +1,9 @@
 import cron from 'node-cron';
 
-const CRON_SCHEDULE = process.env.NOTIFICATION_CRON_SCHEDULE || '30 12 * * *'; // Default: 12:00 PM IST (12:00 UTC)
+// Cron schedule for daily gym notifications
+// Runs every 30 minutes to check for users who should receive notifications
+// Format: minute hour day month weekday
+const CRON_SCHEDULE = process.env.NOTIFICATION_CRON_SCHEDULE || '*/30 * * * *';
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 const CRON_SECRET = process.env.CRON_SECRET;
 

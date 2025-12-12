@@ -18,16 +18,22 @@ async function connectDB() {
 export async function POST(request: Request) {
     try {
         await connectDB();
-        const subscription = await request.json();
+        const body = await request.json();
+        const { notificationTime, ...subscription } = body;
 
         if (!subscription || !subscription.endpoint) {
             return NextResponse.json({ error: 'Invalid subscription' }, { status: 400 });
         }
 
         // Upsert subscription (update if exists, insert if new)
+        // Include notificationTime if provided, otherwise use default (18:30)
         await Subscription.findOneAndUpdate(
             { endpoint: subscription.endpoint },
-            subscription,
+            {
+                ...subscription,
+                notificationTime: notificationTime || '18:30',
+                lastNotified: null // Reset lastNotified when subscribing
+            },
             { upsert: true, new: true }
         );
 

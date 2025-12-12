@@ -16,30 +16,20 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Next.js App
-        run: npm run build
-        env:
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
-          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
-          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
-          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          NOTIFICATION_CRON_SCHEDULE: ${{ secrets.NOTIFICATION_CRON_SCHEDULE }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Build Docker Image
         run: |
-          docker build --build-arg MONGODB_URI="${{ secrets.MONGODB_URI }}" -t gym-schedule-app:latest .
+          docker build \
+            --build-arg MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+            --build-arg NEXT_PUBLIC_VAPID_PUBLIC_KEY="${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" \
+            --build-arg VAPID_PRIVATE_KEY="${{ secrets.VAPID_PRIVATE_KEY }}" \
+            --build-arg VAPID_SUBJECT="${{ secrets.VAPID_SUBJECT }}" \
+            --build-arg NEXT_PUBLIC_BASE_URL="${{ secrets.NEXT_PUBLIC_BASE_URL }}" \
+            --build-arg CRON_SECRET="${{ secrets.CRON_SECRET }}" \
+            --build-arg NOTIFICATION_CRON_SCHEDULE="${{ secrets.NOTIFICATION_CRON_SCHEDULE }}" \
+            -t gym-schedule-app:latest .
 
       - name: Save Docker Image as TAR
         run: |
