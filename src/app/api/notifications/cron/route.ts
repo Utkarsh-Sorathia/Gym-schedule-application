@@ -54,22 +54,20 @@ export async function GET(request: Request) {
 
         console.log(`[Cron] Running at IST time: ${istTime}, Date: ${today}`);
 
-        // Find subscriptions that:
-        // 1. Match current time (within the same hour:minute)
-        // 2. Haven't been notified today (lastNotified is not today)
+        // Find all subscriptions that haven't been notified today
+        // Since this runs once daily at 6:30 PM IST, send to everyone
         const subscriptions = await Subscription.find({
-            notificationTime: istTime,
             $or: [
                 { lastNotified: { $ne: today } },
                 { lastNotified: null }
             ]
         });
 
-        console.log(`[Cron] Found ${subscriptions.length} subscriptions for time ${istTime}`);
+        console.log(`[Cron] Found ${subscriptions.length} subscriptions to notify`);
 
         if (subscriptions.length === 0) {
             return NextResponse.json({
-                message: `No subscriptions found for time ${istTime}`,
+                message: `No subscriptions found to notify`,
                 success: true,
                 time: istTime,
                 date: today

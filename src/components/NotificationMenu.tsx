@@ -5,7 +5,6 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export function NotificationMenu() {
     const [isOpen, setIsOpen] = React.useState(false);
-    const [selectedTime, setSelectedTime] = React.useState('18:30');
     const [isLoading, setIsLoading] = React.useState(false);
     const menuRef = React.useRef<HTMLDivElement>(null);
 
@@ -14,14 +13,7 @@ export function NotificationMenu() {
         subscribeToPush,
         unsubscribeFromPush,
         sendTestNotification,
-        notificationTime,
-        updateNotificationTime
     } = usePushNotifications();
-
-    // Sync selectedTime with notificationTime when it changes
-    React.useEffect(() => {
-        setSelectedTime(notificationTime);
-    }, [notificationTime]);
 
     // Close menu when clicking outside
     React.useEffect(() => {
@@ -36,7 +28,7 @@ export function NotificationMenu() {
 
     const handleSubscribe = async () => {
         setIsLoading(true);
-        const success = await subscribeToPush(selectedTime);
+        const success = await subscribeToPush('18:30'); // Fixed time: 6:30 PM IST
         setIsLoading(false);
 
         if (!success) {
@@ -48,20 +40,6 @@ export function NotificationMenu() {
         setIsLoading(true);
         await unsubscribeFromPush();
         setIsLoading(false);
-    };
-
-    const handleUpdateTime = async () => {
-        if (selectedTime === notificationTime) {
-            return;
-        }
-
-        setIsLoading(true);
-        const success = await updateNotificationTime(selectedTime);
-        setIsLoading(false);
-
-        if (!success) {
-            alert('Failed to update time. Please try again.');
-        }
     };
 
     const handleTest = async () => {
@@ -113,21 +91,8 @@ export function NotificationMenu() {
                                 <p className="text-sm text-blue-600 dark:text-blue-400 mb-2">
                                     Get daily gym reminders even when the app is closed!
                                 </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                    Notification Time
-                                </label>
-                                <input
-                                    type="time"
-                                    value={selectedTime}
-                                    onChange={(e) => setSelectedTime(e.target.value)}
-                                    className="w-full bg-background border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                    disabled={isLoading}
-                                />
-                                <p className="text-[10px] text-muted-foreground mt-1">
-                                    Choose when you want your daily reminder
+                                <p className="text-xs text-muted-foreground">
+                                    📅 Daily notifications at <strong>6:30 PM IST</strong>
                                 </p>
                             </div>
 
@@ -145,34 +110,12 @@ export function NotificationMenu() {
                                 <p className="text-sm text-green-600 dark:text-green-400 font-medium">
                                     ✅ You&apos;re subscribed!
                                 </p>
-                                <p className="text-[10px] text-muted-foreground mt-1">
-                                    Daily reminder at <strong>{notificationTime}</strong>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Daily reminder at <strong>6:30 PM IST</strong>
                                 </p>
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                    Notification Time
-                                </label>
-                                <input
-                                    type="time"
-                                    value={selectedTime}
-                                    onChange={(e) => setSelectedTime(e.target.value)}
-                                    className="w-full bg-background border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                    disabled={isLoading}
-                                />
-                            </div>
-
                             <div className="grid grid-cols-2 gap-2">
-                                {selectedTime !== notificationTime && (
-                                    <button
-                                        onClick={handleUpdateTime}
-                                        disabled={isLoading}
-                                        className="col-span-2 bg-primary text-primary-foreground text-xs py-1.5 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
-                                    >
-                                        {isLoading ? '⏳ Updating...' : '🕐 Update Time'}
-                                    </button>
-                                )}
                                 <button
                                     onClick={handleTest}
                                     disabled={isLoading}
