@@ -29,6 +29,12 @@ jobs:
       run: npm run build
       env:
         MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+        VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+        VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+        NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+        CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        NOTIFICATION_CRON_SCHEDULE: ${{ secrets.NOTIFICATION_CRON_SCHEDULE }}
 
     - name: Show .next directory
       run: ls -R .next

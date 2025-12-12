@@ -69,8 +69,9 @@ export default function SchedulePage() {
             }
             const data = await res.json();
             if (data.success) {
-                setSchedules(data.data);
-                const schedule = data.data.find((s: ISchedule) => s.day === day);
+                const scheduleData = data.data || [];
+                setSchedules(scheduleData);
+                const schedule = scheduleData.find((s: ISchedule) => s.day === day);
                 setExercises(schedule ? schedule.exercises : []);
             }
         } catch (error) {
