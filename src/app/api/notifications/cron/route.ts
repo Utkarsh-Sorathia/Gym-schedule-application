@@ -120,7 +120,12 @@ export async function GET(request: Request) {
 
         const results = await Promise.allSettled(
             subscriptions.map((sub) =>
-                webpush.sendNotification(sub, payload).catch((err) => {
+                webpush.sendNotification(sub, payload, {
+                    headers: {
+                        'Urgency': 'high',
+                        'TTL': '86400' // 24 hours
+                    }
+                }).catch((err) => {
                     if (err.statusCode === 410 || err.statusCode === 404) {
                         // Subscription is invalid/expired, remove it
                         return Subscription.deleteOne({ _id: sub._id });
