@@ -51,7 +51,7 @@ function ScheduleContent() {
         
         setSelectedDay(initialDay);
         setMounted(true);
-    }, []); // Run once on mount
+    }, [searchParams]); // Run on mount and when searchParams change
 
     // 2. Sync from URL to State (handles browser back/forward)
     useEffect(() => {
@@ -59,7 +59,7 @@ function ScheduleContent() {
         if (dayParam && DAYS.includes(dayParam) && dayParam !== selectedDay) {
             setSelectedDay(dayParam);
         }
-    }, [searchParams]); // Only run when URL changes
+    }, [searchParams, selectedDay]); // Only run when URL or selectedDay changes
 
     // 3. Sync from State to URL & LocalStorage
     useEffect(() => {
@@ -567,7 +567,7 @@ function ScheduleContent() {
                             </p>
                             <div className="mt-6 p-4 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
                                 <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80 italic">
-                                    "Muscles are torn in the gym, fed in the kitchen, and built in bed."
+                                    &quot;Muscles are torn in the gym, fed in the kitchen, and built in bed.&quot;
                                 </p>
                             </div>
                         </div>

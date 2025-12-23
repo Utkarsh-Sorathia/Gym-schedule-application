@@ -27,25 +27,34 @@ const WORKOUT_IMAGES: { [key: string]: string } = {
 };
 
 export default function Home() {
-    const [mounted, setMounted] = useState(false);
-    const [quote, setQuote] = useState('');
-    const [greeting, setGreeting] = useState('Welcome');
-    const [today, setToday] = useState('');
+    const [clientData, setClientData] = useState({
+        mounted: false,
+        quote: '',
+        greeting: 'Welcome',
+        today: ''
+    });
 
     useEffect(() => {
-        setMounted(true);
-        setQuote(getRandomQuote());
-        
         const currentDay = DAYS[new Date().getDay()];
-        setToday(currentDay);
-
         const hour = new Date().getHours();
-        if (hour < 12) setGreeting('Good Morning');
-        else if (hour < 17) setGreeting('Good Afternoon');
-        else setGreeting('Good Evening');
+        let greeting = 'Good Evening';
+        if (hour < 12) greeting = 'Good Morning';
+        else if (hour < 17) greeting = 'Good Afternoon';
+
+        const timer = setTimeout(() => {
+            setClientData({
+                mounted: true,
+                quote: getRandomQuote(),
+                greeting,
+                today: currentDay
+            });
+        }, 0);
+        return () => clearTimeout(timer);
     }, []);
 
-    if (!mounted) return null;
+    if (!clientData.mounted) return null;
+
+    const { quote, greeting, today } = clientData;
 
     return (
         <div className="relative min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto lg:overflow-hidden">
@@ -60,7 +69,7 @@ export default function Home() {
                         {greeting}, <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Champion</span>
                     </h1>
                     <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto italic font-light px-4">
-                        "{quote}"
+                        &quot;{quote}&quot;
                     </p>
                 </div>
 
@@ -78,7 +87,7 @@ export default function Home() {
                         
                         <div className="relative p-6 md:p-8 h-full flex flex-col justify-end min-h-[240px] md:min-h-[300px]">
                             <div className="space-y-1 md:space-y-2">
-                                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-primary">Today's Mission</span>
+                                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-primary">Today&apos;s Mission</span>
                                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">{today}</h2>
                                 <p className="text-lg md:text-xl text-muted-foreground font-medium">
                                     {MUSCLE_GROUPS[today]}
@@ -117,7 +126,7 @@ export default function Home() {
                             </div>
                             <div className="relative z-10">
                                 <h3 className="text-lg md:text-xl font-bold text-foreground">Consistency is Key</h3>
-                                <p className="text-muted-foreground text-xs md:text-sm mt-1">You've got this. One rep at a time.</p>
+                                <p className="text-muted-foreground text-xs md:text-sm mt-1">You&apos;ve got this. One rep at a time.</p>
                             </div>
                             <div className="mt-4 h-1.5 md:h-2 w-full bg-muted rounded-full overflow-hidden">
                                 <div className="h-full bg-primary w-[65%] rounded-full" />
