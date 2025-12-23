@@ -39,7 +39,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Navbar />
-          <main className="min-h-screen bg-background">
+          <main className="min-h-[calc(100vh-4rem)] bg-background">
             {children}
           </main>
         </ThemeProvider>
