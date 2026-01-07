@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ISchedule, IExercise, ISet } from '@/models/Schedule';
+import { IScheduleData, IExercise, ISet } from '@/models/Schedule';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -27,19 +27,24 @@ const WORKOUT_IMAGES: { [key: string]: string } = {
 };
 
 function ScheduleContent() {
-    const [schedules, setSchedules] = useState<ISchedule[]>([]);
+    const [schedules, setSchedules] = useState<IScheduleData[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDay, setSelectedDay] = useState(DAYS[0]);
+    const [selectedDay, setSelectedDay] = useState<string>('');
     const [mounted, setMounted] = useState(false);
+    const [exercises, setExercises] = useState<IExercise[]>([]);
+
+    // In-memory cache to prevent redundant fetches within the same session
+    // Using a ref to avoid infinite loops in useEffect while satisfying dependency requirements
+    const cacheRef = useRef<Record<string, { schedules: IScheduleData[], exercises: IExercise[] }>>({});
 
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // 1. Initial mount: Load from URL or LocalStorage
+    // 1. Initial mount: Determine the initial day
     useEffect(() => {
         const dayParam = searchParams.get('day');
         const saved = localStorage.getItem('selectedDay');
-        
+
         let initialDay = '';
         if (dayParam && DAYS.includes(dayParam)) {
             initialDay = dayParam;
@@ -48,93 +53,103 @@ function ScheduleContent() {
         } else {
             initialDay = DAYS[new Date().getDay()];
         }
-        
+
         setSelectedDay(initialDay);
         setMounted(true);
-    }, [searchParams]); // Run on mount and when searchParams change
+    }, [searchParams]); // Run once on mount to initialize state from URL/Storage
 
-    // 2. Sync from URL to State (handles browser back/forward)
+    // 2. Sync from URL to State
     useEffect(() => {
+        if (!mounted) return;
         const dayParam = searchParams.get('day');
         if (dayParam && DAYS.includes(dayParam) && dayParam !== selectedDay) {
             setSelectedDay(dayParam);
         }
-    }, [searchParams, selectedDay]); // Only run when URL or selectedDay changes
+    }, [searchParams, mounted, selectedDay]);
 
     // 3. Sync from State to URL & LocalStorage
     useEffect(() => {
         if (mounted && selectedDay) {
             localStorage.setItem('selectedDay', selectedDay);
-            
+
             const params = new URLSearchParams(window.location.search);
             if (params.get('day') !== selectedDay) {
                 params.set('day', selectedDay);
                 router.replace(`/schedule?${params.toString()}`, { scroll: false });
             }
         }
-    }, [selectedDay, mounted, router]); // Removed searchParams from dependencies
-
-
-    const [exercises, setExercises] = useState<IExercise[]>([]);
+    }, [selectedDay, mounted, router]);
 
     // Form state
     const [name, setName] = useState('');
     const [secondaryName, setSecondaryName] = useState('');
     const [isAlternative, setIsAlternative] = useState(false);
     const [activeFormTab, setActiveFormTab] = useState<'primary' | 'secondary'>('primary');
-    
+
     const [formSets, setFormSets] = useState<ISet[]>([{ reps: 10, weight: 0 }]);
     const [weightType, setWeightType] = useState<'total' | 'per_side'>('total');
-    
+
     const [secondaryFormSets, setSecondaryFormSets] = useState<ISet[]>([{ reps: 10, weight: 0 }]);
     const [secondaryWeightType, setSecondaryWeightType] = useState<'total' | 'per_side'>('total');
-    
+
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
+    // 4. Fetching logic with AbortController and Cache
     useEffect(() => {
-        if (selectedDay) {
-            fetchSchedules(selectedDay);
-        }
-    }, [selectedDay]);
+        if (!mounted || !selectedDay) return;
 
-    const fetchSchedules = async (dayToFetch: string) => {
-        if (!dayToFetch) return;
-        
-        setLoading(true);
-        try {
-            // Use a fresh timestamp to bypass any potential caching
-            const url = `/api/schedule?day=${dayToFetch}&t=${Date.now()}`;
-            const res = await fetch(url);
-            
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            
-            const data = await res.json();
-            
-            if (data.success) {
-                const scheduleData = data.data || [];
-                setSchedules(scheduleData);
-                
-                // Case-insensitive search to be extra safe
-                const schedule = scheduleData.find((s: ISchedule) => 
-                    s.day.toLowerCase() === dayToFetch.toLowerCase()
-                );
-                
-                if (schedule) {
-                    setExercises(schedule.exercises || []);
-                } else {
-                    setExercises([]);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch schedules', error);
-            // Don't clear exercises on error to avoid flickering, 
-            // but maybe show a toast or error state if needed
-        } finally {
+        // Check cache first for instant UI response
+        const cached = cacheRef.current[selectedDay];
+        if (cached) {
+            setSchedules(cached.schedules);
+            setExercises(cached.exercises);
             setLoading(false);
+            // We still fetch fresh data in the background to ensure consistency
+        } else {
+            setLoading(true);
         }
-    };
+
+        const controller = new AbortController();
+
+        const fetchSchedules = async (dayToFetch: string) => {
+            try {
+                const url = `/api/schedule?day=${dayToFetch}&t=${Date.now()}`;
+                const res = await fetch(url, { signal: controller.signal });
+
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+                const data = await res.json();
+
+                if (data.success) {
+                    const scheduleData = data.data || [];
+                    const schedule = scheduleData.find((s: IScheduleData) =>
+                        s.day.toLowerCase() === dayToFetch.toLowerCase()
+                    );
+
+                    const newExercises = schedule ? (schedule.exercises || []) : [];
+
+                    // Update state
+                    setSchedules(scheduleData);
+                    setExercises(newExercises);
+
+                    // Update cache ref (doesn't trigger re-render)
+                    cacheRef.current[dayToFetch] = {
+                        schedules: scheduleData,
+                        exercises: newExercises
+                    };
+                }
+            } catch (error) {
+                if ((error as Error).name === 'AbortError') return;
+                console.error('Failed to fetch schedules', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSchedules(selectedDay);
+
+        return () => controller.abort();
+    }, [selectedDay, mounted]); // removed cacheRef from deps because it's a ref
 
     const handleAddSet = () => {
         if (activeFormTab === 'primary') {
@@ -194,11 +209,11 @@ function ScheduleContent() {
     const handleSaveExercise = async (e: React.FormEvent) => {
         e.preventDefault();
         if (loading) return; // Prevent saving while loading data
-        const newExercise: IExercise = { 
-            name, 
+        const newExercise: IExercise = {
+            name,
             secondaryName: isAlternative ? secondaryName : undefined,
             selectedExercise: editingIndex !== null ? exercises[editingIndex].selectedExercise : 'primary',
-            sets: formSets, 
+            sets: formSets,
             weightType,
             secondarySets: isAlternative ? secondaryFormSets : undefined,
             secondaryWeightType: isAlternative ? secondaryWeightType : undefined
@@ -234,10 +249,17 @@ function ScheduleContent() {
                 }
                 setSchedules(updatedSchedules);
 
-                // Update exercises directly since we removed the useEffect
+                // Update exercises directly
                 const schedule = updatedSchedules.find(s => s.day === selectedDay);
                 if (schedule) {
-                    setExercises(schedule.exercises);
+                    const newExercises = schedule.exercises;
+                    setExercises(newExercises);
+
+                    // Update cache ref
+                    cacheRef.current[selectedDay] = {
+                        schedules: updatedSchedules,
+                        exercises: newExercises
+                    };
                 }
 
                 // Reset form
@@ -259,11 +281,11 @@ function ScheduleContent() {
     const handleToggleExerciseSelection = async (exerciseIndex: number) => {
         const updatedExercises = [...exercises];
         const exercise = { ...updatedExercises[exerciseIndex] };
-        
+
         if (exercise.secondaryName) {
             exercise.selectedExercise = exercise.selectedExercise === 'secondary' ? 'primary' : 'secondary';
             updatedExercises[exerciseIndex] = exercise;
-            
+
             try {
                 const res = await fetch('/api/schedule', {
                     method: 'POST',
@@ -274,6 +296,21 @@ function ScheduleContent() {
                     const data = await res.json();
                     if (data.success) {
                         setExercises(updatedExercises);
+
+                        // Update cache as well
+                        const currentDayCache = cacheRef.current[selectedDay];
+                        if (currentDayCache) {
+                            const newSchedules = [...currentDayCache.schedules];
+                            const dayIndex = newSchedules.findIndex(s => s.day === selectedDay);
+                            if (dayIndex !== -1) {
+                                newSchedules[dayIndex] = { ...newSchedules[dayIndex], exercises: updatedExercises };
+                            }
+
+                            cacheRef.current[selectedDay] = {
+                                schedules: newSchedules,
+                                exercises: updatedExercises
+                            };
+                        }
                     }
                 }
             } catch (error) {
@@ -288,7 +325,7 @@ function ScheduleContent() {
         setSecondaryName(exercise.secondaryName || '');
         setIsAlternative(!!exercise.secondaryName);
         setWeightType(exercise.weightType || 'total');
-        
+
         // Handle legacy format or standard format for sets
         if (Array.isArray(exercise.sets)) {
             setFormSets([...exercise.sets]);
@@ -347,7 +384,14 @@ function ScheduleContent() {
                 // Update exercises directly
                 const schedule = updatedSchedules.find(s => s.day === selectedDay);
                 if (schedule) {
-                    setExercises(schedule.exercises);
+                    const newExercises = schedule.exercises;
+                    setExercises(newExercises);
+
+                    // Update cache ref
+                    cacheRef.current[selectedDay] = {
+                        schedules: updatedSchedules,
+                        exercises: newExercises
+                    };
                 }
             }
         } catch (error) {
@@ -407,7 +451,7 @@ function ScheduleContent() {
                         {/* Enhanced Gradients */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-90" />
                         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent opacity-80" />
-                        
+
                         {/* Content */}
                         <div className="absolute bottom-0 left-0 right-0 p-8 text-white transform transition-transform duration-500 translate-y-2 group-hover:translate-y-0">
                             <div className="flex items-end justify-between">
@@ -509,42 +553,42 @@ function ScheduleContent() {
                                                 </button>
                                             </div>
                                         </div>
-                                            <div className="pl-12 space-y-2">
-                                                {(() => {
-                                                    const isSecondary = exercise.selectedExercise === 'secondary';
-                                                    const currentSets = isSecondary && exercise.secondarySets ? exercise.secondarySets : exercise.sets;
-                                                    const currentWeightType = isSecondary && exercise.secondaryWeightType ? exercise.secondaryWeightType : exercise.weightType;
-                                                    
-                                                    return Array.isArray(currentSets) ? (
-                                                        currentSets.map((set, setIndex) => (
-                                                                <div key={setIndex} className="flex items-center text-sm text-muted-foreground">
-                                                                    <span className="w-16 font-medium text-xs uppercase tracking-wider text-muted-foreground/70">Set {setIndex + 1}</span>
-                                                                    <div className="flex items-center space-x-3">
-                                                                        <span className="bg-secondary px-2 py-0.5 rounded text-secondary-foreground">{set.reps} reps</span>
-                                                                        {(set.weight || 0) > 0 && (
-                                                                            <>
-                                                                                <span>@</span>
-                                                                                <span className={`font-medium ${setIndex === currentSets.length - 1 ? 'text-red-500' : 'text-foreground'}`}>
-                                                                                    {set.weight}kg
-                                                                                    <span className={`text-[10px] ml-1.5 px-1.5 py-0.5 rounded uppercase tracking-wider font-semibold ${currentWeightType === 'per_side'
-                                                                                        ? 'bg-blue-500/10 text-blue-500'
-                                                                                        : 'bg-muted text-muted-foreground'
-                                                                                        }`}>
-                                                                                        {currentWeightType === 'per_side' ? 'Each' : 'Total'}
-                                                                                    </span>
-                                                                                </span>
-                                                                            </>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                        ))
-                                                    ) : (
-                                                        <div className="text-sm text-destructive">
-                                                            Legacy data format. Please delete and recreate this exercise.
+                                        <div className="pl-12 space-y-2">
+                                            {(() => {
+                                                const isSecondary = exercise.selectedExercise === 'secondary';
+                                                const currentSets = isSecondary && exercise.secondarySets ? exercise.secondarySets : exercise.sets;
+                                                const currentWeightType = isSecondary && exercise.secondaryWeightType ? exercise.secondaryWeightType : exercise.weightType;
+
+                                                return Array.isArray(currentSets) ? (
+                                                    currentSets.map((set, setIndex) => (
+                                                        <div key={setIndex} className="flex items-center text-sm text-muted-foreground">
+                                                            <span className="w-16 font-medium text-xs uppercase tracking-wider text-muted-foreground/70">Set {setIndex + 1}</span>
+                                                            <div className="flex items-center space-x-3">
+                                                                <span className="bg-secondary px-2 py-0.5 rounded text-secondary-foreground">{set.reps} reps</span>
+                                                                {(set.weight || 0) > 0 && (
+                                                                    <>
+                                                                        <span>@</span>
+                                                                        <span className={`font-medium ${setIndex === currentSets.length - 1 ? 'text-red-500' : 'text-foreground'}`}>
+                                                                            {set.weight}kg
+                                                                            <span className={`text-[10px] ml-1.5 px-1.5 py-0.5 rounded uppercase tracking-wider font-semibold ${currentWeightType === 'per_side'
+                                                                                ? 'bg-blue-500/10 text-blue-500'
+                                                                                : 'bg-muted text-muted-foreground'
+                                                                                }`}>
+                                                                                {currentWeightType === 'per_side' ? 'Each' : 'Total'}
+                                                                            </span>
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    );
-                                                })()}
-                                            </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="text-sm text-destructive">
+                                                        Legacy data format. Please delete and recreate this exercise.
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>

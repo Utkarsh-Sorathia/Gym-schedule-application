@@ -15,12 +15,14 @@ export interface IExercise {
     secondaryWeightType?: 'total' | 'per_side';
 }
 
-export interface ISchedule extends Document {
+export interface IScheduleData {
     day: string;
     exercises: IExercise[];
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
+
+export interface ISchedule extends IScheduleData, Document {}
 
 const SetSchema: Schema = new Schema({
     reps: { type: Number, required: true },

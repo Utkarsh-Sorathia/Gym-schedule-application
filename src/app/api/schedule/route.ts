@@ -31,8 +31,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: 'Day and exercises are required' }, { status: 400 });
         }
 
-        // Check if schedule for the day already exists
-        let schedule = await Schedule.findOne({ day });
+        // Check if schedule for the day already exists with case-insensitive search
+        let schedule = await Schedule.findOne({ day: { $regex: new RegExp(`^${day}$`, 'i') } });
 
         if (schedule) {
             // Update existing schedule
